@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import {
   View,
   Text,
@@ -21,6 +22,8 @@ const permissions = [
 const CallingScreen = () => {
   const [permissionGranted, setPermissionGranted] = useState(false);
   const [callStatus, setCallStatus] = useState('Initializing');
+  const [localVideoStreamId, setLocalVideoStreamId] = useState('');
+  const [remoteVideoStreamId, setRemoteVideoStreamId] = useState('');
 
   const navigation = useNavigation();
   const route = useRoute(); // va permettre de recuperer les donnees du user que l'on appelle
@@ -28,6 +31,9 @@ const CallingScreen = () => {
   const voximplant = Voximplant.getInstance();
 
   const call = useRef(incomingCall); // permet de ne pas reset la variable a chaque fois que la page est chargee
+  const endpoint = useRef(null);
+
+  let isOnCall = false;
 
   const goBack = () => {
     navigation.pop();
@@ -74,7 +80,10 @@ const CallingScreen = () => {
 
     const answerCall = async () => {
       subscribeToCallEvents();
+      endpoint.current = call.current.getEndpoints()[0];
+      subscribeToEndpointEvent();
       call.current.answer(callSettings);
+      isOnCall = true;
     };
 
     const subscribeToCallEvents = () => {
@@ -90,6 +99,25 @@ const CallingScreen = () => {
       call.current.on(Voximplant.CallEvents.Disconnected, callEvent => {
         navigation.navigate('Contacts');
       });
+      call.current.on(
+        Voximplant.CallEvents.LocalVideoStreamAdded,
+        callEvent => {
+          setLocalVideoStreamId(callEvent.videoStream.id);
+        },
+      );
+      call.current.on(Voximplant.CallEvents.EndpointAdded, callEvent => {
+        endpoint.current = callEvent.endpoint;
+        subscribeToEndpointEvent();
+      });
+    };
+
+    const subscribeToEndpointEvent = async () => {
+      endpoint.current.on(
+        Voximplant.EndpointEvents.RemoteVideoStreamAdded,
+        endpointEvent => {
+          setRemoteVideoStreamId(endpointEvent.videoStream.id);
+        },
+      );
     };
 
     const showCallError = reason => {
@@ -117,6 +145,7 @@ const CallingScreen = () => {
 
   const onHangupPress = () => {
     call.current.hangup();
+    isOnCall = false;
   };
 
   return (
@@ -125,12 +154,26 @@ const CallingScreen = () => {
         <Ionicons name="chevron-back" color="white" size={25} />
       </Pressable>
 
-      <View style={styles.cameraPreview}>
-        <Text style={styles.name}>{user?.user_display_name}</Text>
-        <Text style={styles.phoneNumber}>
-          {callStatus} {user?.phone_number}...
-        </Text>
-      </View>
+      <Voximplant.VideoView
+        videoStreamId={remoteVideoStreamId}
+        style={styles.remoteVideo}
+      />
+
+      <Voximplant.VideoView
+        videoStreamId={localVideoStreamId}
+        style={styles.localVideo}
+      />
+
+      {isOnCall ? (
+        <View />
+      ) : (
+        <View style={styles.cameraPreview}>
+          <Text style={styles.name}>{user?.user_display_name}</Text>
+          <Text style={styles.phoneNumber}>
+            {callStatus} {user?.phone_number}...
+          </Text>
+        </View>
+      )}
 
       <CallActionBox onHangupPress={onHangupPress} />
     </View>
@@ -147,6 +190,24 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingTop: 10,
     paddingHorizontal: 10,
+  },
+  localVideo: {
+    width: 100,
+    height: 150,
+    backgroundColor: '#FFFF6E',
+    position: 'absolute',
+    right: 10,
+    top: 100,
+    borderRadius: 10,
+  },
+  remoteVideo: {
+    backgroundColor: '#FFFF6E',
+    position: 'absolute',
+    borderRadius: 10,
+    bottom: 100,
+    left: 0,
+    right: 0,
+    top: 0,
   },
   name: {
     fontSize: 30,
