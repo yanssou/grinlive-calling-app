@@ -1,4 +1,4 @@
-/* eslint-disable react-hooks/exhaustive-deps */
+import React, {useEffect, useState, useRef} from 'react';
 import {
   View,
   Text,
@@ -8,10 +8,9 @@ import {
   Alert,
   Platform,
 } from 'react-native';
-import React, {useEffect, useState, useRef} from 'react';
 import CallActionBox from '../../components/CallActionBox';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import {useNavigation, useRoute} from '@react-navigation/native';
+import {useNavigation, useRoute} from '@react-navigation/core';
 import {Voximplant} from 'react-native-voximplant';
 
 const permissions = [
@@ -21,26 +20,25 @@ const permissions = [
 
 const CallingScreen = () => {
   const [permissionGranted, setPermissionGranted] = useState(false);
-  const [callStatus, setCallStatus] = useState('Initializing');
+  const [callStatus, setCallStatus] = useState('Initializing...');
   const [localVideoStreamId, setLocalVideoStreamId] = useState('');
   const [remoteVideoStreamId, setRemoteVideoStreamId] = useState('');
 
   const navigation = useNavigation();
-  const route = useRoute(); // va permettre de recuperer les donnees du user que l'on appelle
-  const {user, call: incomingCall, isIncomingCall} = route?.params; // on utilise ? car il se peut que le user ne soit pas renseigné
+  const route = useRoute();
+
+  const {user, call: incomingCall, isIncomingCall} = route?.params;
+
   const voximplant = Voximplant.getInstance();
 
-  const call = useRef(incomingCall); // permet de ne pas reset la variable a chaque fois que la page est chargee
+  const call = useRef(incomingCall);
   const endpoint = useRef(null);
-
-  let isOnCall = false;
 
   const goBack = () => {
     navigation.pop();
   };
 
   useEffect(() => {
-    // obtention des permission audio et video sur android
     const getPermissions = async () => {
       const granted = await PermissionsAndroid.requestMultiple(permissions);
       const recordAudioGranted =
@@ -48,7 +46,7 @@ const CallingScreen = () => {
       const cameraGranted =
         granted[PermissionsAndroid.PERMISSIONS.CAMERA] === 'granted';
       if (!cameraGranted || !recordAudioGranted) {
-        Alert.alert('Permissions are not granted');
+        Alert.alert('Permissions not granted');
       } else {
         setPermissionGranted(true);
       }
@@ -83,15 +81,14 @@ const CallingScreen = () => {
       endpoint.current = call.current.getEndpoints()[0];
       subscribeToEndpointEvent();
       call.current.answer(callSettings);
-      isOnCall = true;
     };
 
     const subscribeToCallEvents = () => {
       call.current.on(Voximplant.CallEvents.Failed, callEvent => {
-        showCallError(callEvent.reason);
+        showError(callEvent.reason);
       });
       call.current.on(Voximplant.CallEvents.ProgressToneStart, callEvent => {
-        setCallStatus('Ringing');
+        setCallStatus('Calling...');
       });
       call.current.on(Voximplant.CallEvents.Connected, callEvent => {
         setCallStatus('Connected');
@@ -120,8 +117,8 @@ const CallingScreen = () => {
       );
     };
 
-    const showCallError = reason => {
-      Alert.alert('Call Failed', `Reason : ${reason}`, [
+    const showError = reason => {
+      Alert.alert('Call failed', `Reason: ${reason}`, [
         {
           text: 'Ok',
           onPress: navigation.navigate('Contacts'),
@@ -136,16 +133,15 @@ const CallingScreen = () => {
     }
 
     return () => {
-      call.current.off(Voximplant.CallEvents.Failed); // unsubscribing
-      call.current.off(Voximplant.CallEvents.ProgressToneStart); // unsubscribing
-      call.current.off(Voximplant.CallEvents.Connected); // unsubscribing
-      call.current.off(Voximplant.CallEvents.Disconnected); // unsubscribing
+      call.current.off(Voximplant.CallEvents.Failed);
+      call.current.off(Voximplant.CallEvents.ProgressToneStart);
+      call.current.off(Voximplant.CallEvents.Connected);
+      call.current.off(Voximplant.CallEvents.Disconnected);
     };
   }, [permissionGranted]);
 
   const onHangupPress = () => {
     call.current.hangup();
-    isOnCall = false;
   };
 
   return (
@@ -153,27 +149,19 @@ const CallingScreen = () => {
       <Pressable onPress={goBack} style={styles.backButton}>
         <Ionicons name="chevron-back" color="white" size={25} />
       </Pressable>
-
+      <Voximplant.VideoView
+        videoStreamId={localVideoStreamId}
+        style={styles.localVideo}
+      />
       <Voximplant.VideoView
         videoStreamId={remoteVideoStreamId}
         style={styles.remoteVideo}
       />
 
-      <Voximplant.VideoView
-        videoStreamId={localVideoStreamId}
-        style={styles.localVideo}
-      />
-
-      {isOnCall ? (
-        <View />
-      ) : (
-        <View style={styles.cameraPreview}>
-          <Text style={styles.name}>{user?.user_display_name}</Text>
-          <Text style={styles.phoneNumber}>
-            {callStatus} {user?.phone_number}...
-          </Text>
-        </View>
-      )}
+      <View style={styles.cameraPreview}>
+        <Text style={styles.name}>{user?.user_display_name}</Text>
+        <Text style={styles.phoneNumber}>{callStatus}</Text>
+      </View>
 
       <CallActionBox onHangupPress={onHangupPress} />
     </View>
@@ -194,20 +182,19 @@ const styles = StyleSheet.create({
   localVideo: {
     width: 100,
     height: 150,
-    backgroundColor: '#FFFF6E',
+    borderRadius: 10,
     position: 'absolute',
     right: 10,
     top: 100,
-    borderRadius: 10,
   },
   remoteVideo: {
-    backgroundColor: '#FFFF6E',
-    position: 'absolute',
+    backgroundColor: '#7b4e80',
     borderRadius: 10,
-    bottom: 100,
+    position: 'absolute',
     left: 0,
     right: 0,
     top: 0,
+    bottom: 100,
   },
   name: {
     fontSize: 30,
@@ -222,8 +209,9 @@ const styles = StyleSheet.create({
   },
   backButton: {
     position: 'absolute',
-    top: 30,
+    top: 50,
     left: 10,
+    zIndex: 10,
   },
 });
 

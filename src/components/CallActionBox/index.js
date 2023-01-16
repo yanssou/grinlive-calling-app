@@ -4,12 +4,25 @@ import React, {useState} from 'react';
 import Ionicon from 'react-native-vector-icons/Ionicons';
 import MaterialIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
+import {Voximplant} from 'react-native-voximplant';
 
 const CallActionBox = ({onHangupPress}) => {
   const [isCameraOn, setIsCameraOn] = useState(true);
   const [isMicOn, setIsMicOn] = useState(true);
+  const cam = Voximplant.Hardware.CameraManager.getInstance();
+  const camType = Voximplant.Hardware.CameraType;
+  let isBack = false;
 
-  const onReverseCamera = () => {};
+  const onReverseCamera = () => {
+    if (isBack === false) {
+      cam.switchCamera(camType.BACK);
+      isBack = true;
+    } else {
+      cam.switchCamera(camType.FRONT);
+      isBack = false;
+    }
+    console.log(isBack);
+  };
 
   const onToggleCamera = () => {
     setIsCameraOn(currentValue => !currentValue); // permet d'afficher une icone differente selon le mode
