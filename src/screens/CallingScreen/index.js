@@ -150,12 +150,12 @@ const CallingScreen = () => {
         <Ionicons name="chevron-back" color="white" size={25} />
       </Pressable>
       <Voximplant.VideoView
-        videoStreamId={localVideoStreamId}
-        style={styles.localVideo}
-      />
-      <Voximplant.VideoView
         videoStreamId={remoteVideoStreamId}
         style={styles.remoteVideo}
+      />
+      <Voximplant.VideoView
+        videoStreamId={localVideoStreamId}
+        style={styles.localVideo}
       />
 
       <View style={styles.cameraPreview}>
