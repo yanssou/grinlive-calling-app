@@ -12,6 +12,7 @@ import CallActionBox from '../../components/CallActionBox';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import {useNavigation, useRoute} from '@react-navigation/core';
 import {Voximplant} from 'react-native-voximplant';
+import {VICamera} from 'react-native-voximplant';
 
 const permissions = [
   PermissionsAndroid.PERMISSIONS.RECORD_AUDIO,
@@ -23,6 +24,7 @@ const CallingScreen = () => {
   const [callStatus, setCallStatus] = useState('Initializing...');
   const [localVideoStreamId, setLocalVideoStreamId] = useState('');
   const [remoteVideoStreamId, setRemoteVideoStreamId] = useState('');
+  const [remoteVideoStreamId2, setRemoteVideoStreamId2] = useState('');
 
   const navigation = useNavigation();
   const route = useRoute();
@@ -107,12 +109,14 @@ const CallingScreen = () => {
         subscribeToEndpointEvent();
       });
     };
-
+    const cam = Voximplant.Hardware.CameraManager.getInstance();
     const subscribeToEndpointEvent = async () => {
       endpoint.current.on(
         Voximplant.EndpointEvents.RemoteVideoStreamAdded,
         endpointEvent => {
           setRemoteVideoStreamId(endpointEvent.videoStream.id);
+          setRemoteVideoStreamId2(endpointEvent.videoStream.id);
+          cam.switchCamera(Voximplant.Hardware.CameraType.BACK);
         },
       );
     };
@@ -149,15 +153,20 @@ const CallingScreen = () => {
       <Pressable onPress={goBack} style={styles.backButton}>
         <Ionicons name="chevron-back" color="white" size={25} />
       </Pressable>
+
       <Voximplant.VideoView
         videoStreamId={remoteVideoStreamId}
         style={styles.remoteVideo}
       />
       <Voximplant.VideoView
+        videoStreamId={remoteVideoStreamId2}
+        style={styles.remoteVideo2}
+      />
+
+      <Voximplant.VideoView
         videoStreamId={localVideoStreamId}
         style={styles.localVideo}
       />
-
       <View style={styles.cameraPreview}>
         <Text style={styles.name}>{user?.user_display_name}</Text>
         <Text style={styles.phoneNumber}>{callStatus}</Text>
@@ -179,6 +188,11 @@ const styles = StyleSheet.create({
     paddingTop: 10,
     paddingHorizontal: 10,
   },
+  container: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   localVideo: {
     width: 100,
     height: 150,
@@ -188,6 +202,9 @@ const styles = StyleSheet.create({
     top: 100,
   },
   remoteVideo: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
     backgroundColor: '#7b4e80',
     borderRadius: 10,
     position: 'absolute',
@@ -195,6 +212,10 @@ const styles = StyleSheet.create({
     right: 0,
     top: 0,
     bottom: 100,
+  },
+  remoteVideo2: {
+    top: 200,
+    height: '100%',
   },
   name: {
     fontSize: 30,
