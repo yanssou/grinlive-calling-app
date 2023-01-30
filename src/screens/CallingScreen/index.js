@@ -114,9 +114,13 @@ const CallingScreen = () => {
       endpoint.current.on(
         Voximplant.EndpointEvents.RemoteVideoStreamAdded,
         endpointEvent => {
-          setRemoteVideoStreamId(endpointEvent.videoStream.id);
-          setRemoteVideoStreamId2(endpointEvent.videoStream.id);
-          cam.switchCamera(Voximplant.Hardware.CameraType.BACK);
+          if (endpointEvent.videoType === 'front') {
+            setRemoteVideoStreamId(endpointEvent.videoStream.id);
+          } else {
+            setRemoteVideoStreamId2(endpointEvent.videoStream.id);
+          }
+          //setRemoteVideoStreamId(endpointEvent.videoStream.id);
+          //setRemoteVideoStreamId2(endpointEvent.videoStream.id);
         },
       );
     };
