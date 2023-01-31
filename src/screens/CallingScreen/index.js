@@ -35,6 +35,7 @@ const CallingScreen = () => {
 
   const call = useRef(incomingCall);
   const endpoint = useRef(null);
+  const secondEnpoint = useRef(null);
 
   const goBack = () => {
     navigation.pop();
@@ -81,6 +82,7 @@ const CallingScreen = () => {
     const answerCall = async () => {
       subscribeToCallEvents();
       endpoint.current = call.current.getEndpoints()[0];
+      secondEnpoint.current = call.current.getEndpoints()[0];
       subscribeToEndpointEvent();
       call.current.answer(callSettings);
     };
@@ -114,16 +116,15 @@ const CallingScreen = () => {
       endpoint.current.on(
         Voximplant.EndpointEvents.RemoteVideoStreamAdded,
         endpointEvent => {
-          if (endpointEvent.videoType === 'front') {
-            setRemoteVideoStreamId(endpointEvent.videoStream.id);
-          } else {
-            setRemoteVideoStreamId2(endpointEvent.videoStream.id);
-          }
-          //setRemoteVideoStreamId(endpointEvent.videoStream.id);
-          //setRemoteVideoStreamId2(endpointEvent.videoStream.id);
+          setRemoteVideoStreamId(endpointEvent.videoStream.id);
+          setRemoteVideoStreamId2(endpointEvent.videoStream.id);
+          // set direction of one camera to front and one to back without cam
+          //cam.switchCamera(Voximplant.Hardware.CameraType.BACK);
         },
       );
     };
+
+    // initialize two cameras with different orientations without VICamera
 
     const showError = reason => {
       Alert.alert('Call failed', `Reason: ${reason}`, [
@@ -170,6 +171,7 @@ const CallingScreen = () => {
       <Voximplant.VideoView
         videoStreamId={localVideoStreamId}
         style={styles.localVideo}
+        showOnTop={true}
       />
       <View style={styles.cameraPreview}>
         <Text style={styles.name}>{user?.user_display_name}</Text>
