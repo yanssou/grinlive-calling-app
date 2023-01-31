@@ -82,7 +82,6 @@ const CallingScreen = () => {
     const answerCall = async () => {
       subscribeToCallEvents();
       endpoint.current = call.current.getEndpoints()[0];
-      secondEnpoint.current = call.current.getEndpoints()[0];
       subscribeToEndpointEvent();
       call.current.answer(callSettings);
     };
@@ -112,20 +111,16 @@ const CallingScreen = () => {
       });
     };
     const cam = Voximplant.Hardware.CameraManager.getInstance();
+
     const subscribeToEndpointEvent = async () => {
       endpoint.current.on(
         Voximplant.EndpointEvents.RemoteVideoStreamAdded,
         endpointEvent => {
           setRemoteVideoStreamId(endpointEvent.videoStream.id);
           setRemoteVideoStreamId2(endpointEvent.videoStream.id);
-          // set direction of one camera to front and one to back without cam
-          //cam.switchCamera(Voximplant.Hardware.CameraType.BACK);
         },
       );
     };
-
-    // initialize two cameras with different orientations without VICamera
-
     const showError = reason => {
       Alert.alert('Call failed', `Reason: ${reason}`, [
         {
