@@ -12,7 +12,7 @@ import CallActionBox from '../../components/CallActionBox';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import {useNavigation, useRoute} from '@react-navigation/core';
 import {Voximplant} from 'react-native-voximplant';
-import {VICamera} from 'react-native-voximplant';
+import {VideoStream} from 'react-native-voximplant/src/Voximplant';
 
 const permissions = [
   PermissionsAndroid.PERMISSIONS.RECORD_AUDIO,
@@ -84,8 +84,9 @@ const CallingScreen = () => {
       endpoint.current = call.current.getEndpoints()[0];
       subscribeToEndpointEvent();
       call.current.answer(callSettings);
-    };
 
+    };
+ 
     const subscribeToCallEvents = () => {
       call.current.on(Voximplant.CallEvents.Failed, callEvent => {
         showError(callEvent.reason);
